@@ -1,0 +1,852 @@
+<!DOCTYPE html>
+<html lang="zh-HK">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>數學與生活：原來裝水都有「數」講</title>
+    <!-- Three.js 3D 引擎 -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Microsoft JhengHei", "PingFang TC", sans-serif;
+            -webkit-user-select: none;
+            user-select: none;
+        }
+
+        body {
+            background-color: #f0f7ff;
+            color: #1e293b;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+            padding: 12px;
+            overflow: hidden;
+        }
+
+        header {
+            width: 100%;
+            max-width: 1180px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+            margin-bottom: 16px;
+            padding: 0 10px;
+        }
+
+        h1 {
+            font-size: 2.2rem;
+            font-weight: 900;
+            letter-spacing: 1.2px;
+            text-align: center;
+            background: linear-gradient(135deg, #0284c7 0%, #0369a1 50%, #0c4a6e 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            text-shadow: 2px 4px 10px rgba(2, 132, 199, 0.2);
+        }
+
+        .main-container {
+            display: flex;
+            gap: 18px;
+            width: 100%;
+            max-width: 1180px;
+            height: 68vh;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .panel {
+            background: #ffffff;
+            border-radius: 20px;
+            box-shadow: 0 10px 25px rgba(2, 132, 199, 0.08);
+            padding: 14px;
+            flex: 1;
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            position: relative;
+            border: 2px solid #bae6fd;
+        }
+
+        .panel-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            width: 100%;
+            margin-bottom: 8px;
+            padding: 0 6px;
+        }
+
+        .panel h2 {
+            font-size: 1.15rem;
+            color: #0369a1;
+            font-weight: 700;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .status-tag {
+            font-size: 0.85rem;
+            padding: 4px 14px;
+            border-radius: 12px;
+            background-color: #e0f2fe;
+            color: #0284c7;
+            font-weight: 700;
+            border: 1px solid #7dd3fc;
+        }
+
+        #vase3dContainer {
+            width: 100%;
+            height: 100%;
+            border-radius: 14px;
+            overflow: hidden;
+            background: radial-gradient(circle at center, #ffffff 0%, #e0f2fe 100%);
+            border: 1.5px solid #bae6fd;
+            position: relative;
+        }
+
+        #drawCanvas {
+            width: 100%;
+            height: 100%;
+            background-color: #f8fafc;
+            border-radius: 14px;
+            border: 1.5px solid #bae6fd;
+            touch-action: none;
+            cursor: crosshair;
+        }
+
+        .controls {
+            margin-top: 14px;
+            display: flex;
+            gap: 12px;
+            width: 100%;
+            max-width: 1180px;
+            justify-content: center;
+            align-items: center;
+            flex-wrap: wrap;
+        }
+
+        .btn {
+            padding: 11px 22px;
+            font-size: 0.95rem;
+            font-weight: 700;
+            color: white;
+            border: none;
+            border-radius: 12px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            box-shadow: 0 4px 12px rgba(2, 132, 199, 0.15);
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .btn:disabled {
+            background-color: #cbd5e1 !important;
+            color: #94a3b8 !important;
+            cursor: not-allowed;
+            opacity: 0.7;
+            box-shadow: none;
+        }
+
+        .btn:active:not(:disabled) {
+            transform: scale(0.96);
+        }
+
+        .btn-primary { background-color: #0284c7; }
+        .btn-primary:hover:not(:disabled) { background-color: #0369a1; }
+
+        .btn-success { background-color: #16a34a; }
+        .btn-success:hover:not(:disabled) { background-color: #15803d; }
+
+        .btn-amber { background-color: #d97706; }
+        .btn-amber:hover:not(:disabled) { background-color: #b45309; }
+
+        .btn-secondary { background-color: #64748b; }
+        .btn-secondary:hover:not(:disabled) { background-color: #475569; }
+
+        .hint-overlay {
+            position: absolute;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            font-size: 0.9rem;
+            color: #0284c7;
+            pointer-events: none;
+            background: rgba(255, 255, 255, 0.94);
+            padding: 8px 20px;
+            border-radius: 20px;
+            border: 1.5px solid #7dd3fc;
+            font-weight: 700;
+            box-shadow: 0 4px 16px rgba(2, 132, 199, 0.12);
+            white-space: nowrap;
+            z-index: 10;
+        }
+
+        .control-group {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            background: #ffffff;
+            padding: 8px 16px;
+            border-radius: 12px;
+            border: 1.5px solid #bae6fd;
+            font-size: 0.9rem;
+            font-weight: 700;
+            color: #0369a1;
+            box-shadow: 0 2px 8px rgba(2, 132, 199, 0.06);
+        }
+
+        .control-group select {
+            border: none;
+            background: transparent;
+            font-weight: 700;
+            color: #0284c7;
+            outline: none;
+            cursor: pointer;
+            font-size: 0.95rem;
+        }
+    </style>
+</head>
+<body>
+
+    <header>
+        <h1>數學與生活：原來裝水都有「數」講</h1>
+    </header>
+
+    <div class="main-container">
+        <!-- 左側：3D 水樽與水喉動畫 -->
+        <div class="panel">
+            <div class="panel-header">
+                <h2>🫙 模擬裝水動畫</h2>
+                <span class="status-tag" id="pourStatus">等候裝水</span>
+            </div>
+            <div id="vase3dContainer"></div>
+        </div>
+
+        <!-- 右側：關係圖繪圖區 -->
+        <div class="panel">
+            <div class="panel-header">
+                <h2>📈 水深與水量的關係圖(H-V)</h2>
+                <span class="status-tag" id="drawStatus">請先劃預測線</span>
+            </div>
+            <canvas id="drawCanvas"></canvas>
+            <div class="hint-overlay" id="canvasHint">✍️ 請在圖上畫出預測曲線</div>
+        </div>
+    </div>
+
+    <!-- 按鈕控制列 -->
+    <div class="controls">
+        <div class="control-group">
+            <label for="vaseShapeSelect">水樽形狀：</label>
+            <select id="vaseShapeSelect">
+                <option value="cylinder" selected>1. 圓柱形水樽</option>
+                <option value="cone">2. 下窄上寬水樽</option>
+                <option value="flask">3. 細頸擴底水樽</option>
+                <option value="gourd">4. 葫蘆形水樽</option>
+            </select>
+        </div>
+
+        <button id="startBtn" class="btn btn-primary">▶ 開始裝水</button>
+        <button id="pauseBtn" class="btn btn-amber" disabled>⏸ 暫停</button>
+        <button id="showAnswerBtn" class="btn btn-success">👁 對比理論答案</button>
+        <button id="clearBtn" class="btn btn-secondary">✏ 重劃預測線</button>
+    </div>
+
+    <script>
+        let isSimulating = false;
+        let simAnimationFrame;
+
+        const container = document.getElementById('vase3dContainer');
+        const scene = new THREE.Scene();
+
+        const camera = new THREE.PerspectiveCamera(45, container.clientWidth / container.clientHeight, 0.1, 1000);
+        camera.position.set(0, 0.45, 4.2);
+        camera.lookAt(0, 0.05, 0);
+
+        const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+        renderer.setSize(container.clientWidth, container.clientHeight);
+        renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+        renderer.toneMapping = THREE.ACESFilmicToneMapping;
+        renderer.toneMappingExposure = 1.2;
+        container.appendChild(renderer.domElement);
+
+        const ambientLight = new THREE.AmbientLight(0xffffff, 1.8);
+        scene.add(ambientLight);
+
+        const mainSpot = new THREE.DirectionalLight(0xffffff, 2.2);
+        mainSpot.position.set(5, 8, 5);
+        scene.add(mainSpot);
+
+        const rimLight = new THREE.DirectionalLight(0x0284c7, 1.8);
+        rimLight.position.set(-6, 4, -4);
+        scene.add(rimLight);
+
+        const gridHelper = new THREE.GridHelper(6, 24, 0x7dd3fc, 0xcbd5e1);
+        gridHelper.position.y = -1.12;
+        scene.add(gridHelper);
+
+        const pedestalGeo = new THREE.CylinderGeometry(1.15, 1.25, 0.08, 64);
+        const pedestalMat = new THREE.MeshStandardMaterial({
+            color: 0xe2e8f0,
+            roughness: 0.3,
+            metalness: 0.6
+        });
+        const pedestalMesh = new THREE.Mesh(pedestalGeo, pedestalMat);
+        pedestalMesh.position.set(0, -1.14, 0);
+        scene.add(pedestalMesh);
+
+        // 建構金屬水喉
+        const faucetGroup = new THREE.Group();
+        const faucetMat = new THREE.MeshStandardMaterial({
+            color: 0x94a3b8,
+            metalness: 0.95,
+            roughness: 0.15
+        });
+
+        const pipeCurve = new THREE.CatmullRomCurve3([
+            new THREE.Vector3(-0.8, 1.85, 0),
+            new THREE.Vector3(-0.35, 1.9, 0),
+            new THREE.Vector3(0.0, 1.82, 0),
+            new THREE.Vector3(0.0, 1.5, 0)
+        ]);
+        const pipeGeo = new THREE.TubeGeometry(pipeCurve, 32, 0.055, 16, false);
+        faucetGroup.add(new THREE.Mesh(pipeGeo, faucetMat));
+
+        const nozzleGeo = new THREE.CylinderGeometry(0.075, 0.065, 0.12, 16);
+        const nozzleMesh = new THREE.Mesh(nozzleGeo, faucetMat);
+        nozzleMesh.position.set(0, 1.44, 0);
+        faucetGroup.add(nozzleMesh);
+
+        scene.add(faucetGroup);
+
+        // 4 款水樽 3D 幾何輪廓定義
+        const shapeConfigs = {
+            cylinder: [
+                new THREE.Vector2(0.00, -1.10),
+                new THREE.Vector2(0.46, -1.10),
+                new THREE.Vector2(0.46,  1.10)
+            ],
+            cone: [
+                new THREE.Vector2(0.00, -1.10),
+                new THREE.Vector2(0.24, -1.10),
+                new THREE.Vector2(0.72,  1.10)
+            ],
+            flask: [
+                new THREE.Vector2(0.00, -1.10),
+                new THREE.Vector2(0.72, -1.10),
+                new THREE.Vector2(0.68, -0.30),
+                new THREE.Vector2(0.42,  0.10),
+                new THREE.Vector2(0.18,  0.35),
+                new THREE.Vector2(0.18,  1.10)
+            ],
+            gourd: [
+                new THREE.Vector2(0.00, -1.10),
+                new THREE.Vector2(0.62, -1.10),
+                new THREE.Vector2(0.70, -0.65),
+                new THREE.Vector2(0.60, -0.25),
+                new THREE.Vector2(0.35,  0.15),
+                new THREE.Vector2(0.52,  0.55),
+                new THREE.Vector2(0.44,  0.90),
+                new THREE.Vector2(0.24,  1.00),
+                new THREE.Vector2(0.24,  1.10)
+            ]
+        };
+
+        let currentShapeKey = 'cylinder';
+        let currentSpline = new THREE.SplineCurve(shapeConfigs[currentShapeKey]);
+
+        function getVaseRadiusAtHeight(h) {
+            h = Math.max(0, Math.min(1, h));
+            const targetY = -1.10 + h * 2.20;
+            for (let t = 0; t <= 1; t += 0.003) {
+                const pt = currentSpline.getPoint(t);
+                if (pt.y >= targetY) return pt.x;
+            }
+            return 0.3;
+        }
+
+        let vaseMeshGroup = new THREE.Group();
+        scene.add(vaseMeshGroup);
+
+        // 恢復高清晰透明玻璃材質
+        const glassMaterial = new THREE.MeshPhysicalMaterial({
+            color: 0x0284c7,
+            transparent: true,
+            opacity: 0.35,
+            roughness: 0.05,
+            metalness: 0.1,
+            transmission: 0.9,
+            ior: 1.48,
+            reflectivity: 0.9,
+            clearcoat: 1.0,
+            side: THREE.DoubleSide,
+            depthWrite: false
+        });
+
+        // 強化邊線輪廓，確保空水樽結構清晰
+        const rimLineMat = new THREE.LineBasicMaterial({
+            color: 0x0284c7,
+            transparent: true,
+            opacity: 0.95,
+            linewidth: 3
+        });
+
+        function createVase3DMesh() {
+            while(vaseMeshGroup.children.length > 0) {
+                const child = vaseMeshGroup.children[0];
+                if(child.geometry) child.geometry.dispose();
+                vaseMeshGroup.remove(child);
+            }
+
+            currentSpline = new THREE.SplineCurve(shapeConfigs[currentShapeKey]);
+            const points = currentSpline.getPoints(140);
+
+            const latheGeo = new THREE.LatheGeometry(points, 80);
+            const mainVase = new THREE.Mesh(latheGeo, glassMaterial);
+            mainVase.renderOrder = 2;
+            vaseMeshGroup.add(mainVase);
+
+            const edgesGeo = new THREE.EdgesGeometry(latheGeo, 24);
+            const edgeLines = new THREE.LineSegments(edgesGeo, rimLineMat);
+            edgeLines.renderOrder = 3;
+            vaseMeshGroup.add(edgeLines);
+        }
+
+        createVase3DMesh();
+
+        let currentVolumeV = 0;
+        let waterLevelH = 0;
+
+        const waterGroup = new THREE.Group();
+        scene.add(waterGroup);
+
+        // 清晰、鮮豔且飽和的水體材質
+        const waterMaterial = new THREE.MeshStandardMaterial({
+            color: 0x0284c7,
+            roughness: 0.15,
+            metalness: 0.25,
+            transparent: true,
+            opacity: 0.82
+        });
+
+        const waterTopCapMat = new THREE.MeshStandardMaterial({
+            color: 0x38bdf8,
+            roughness: 0.1,
+            metalness: 0.3,
+            side: THREE.DoubleSide
+        });
+
+        const streamGroup = new THREE.Group();
+        scene.add(streamGroup);
+
+        const streamMaterial = new THREE.MeshBasicMaterial({
+            color: 0x38bdf8,
+            transparent: true,
+            opacity: 0.9
+        });
+
+        function update3DFluid(h, isPouring, animTime) {
+            while(waterGroup.children.length > 0) {
+                const c = waterGroup.children[0];
+                if(c.geometry) c.geometry.dispose();
+                waterGroup.remove(c);
+            }
+            while(streamGroup.children.length > 0) {
+                const c = streamGroup.children[0];
+                if(c.geometry) c.geometry.dispose();
+                streamGroup.remove(c);
+            }
+
+            if (h > 0.001) {
+                const slices = 50;
+                const waterPoints = [];
+                waterPoints.push(new THREE.Vector2(0, -1.10));
+
+                for (let i = 0; i <= slices; i++) {
+                    let currentH = (i / slices) * h;
+                    let r = getVaseRadiusAtHeight(currentH) * 0.985;
+                    let y = -1.10 + currentH * 2.20;
+                    waterPoints.push(new THREE.Vector2(r, y));
+                }
+
+                let topY = -1.10 + h * 2.20;
+                let topR = getVaseRadiusAtHeight(h) * 0.985;
+
+                const waterGeo = new THREE.LatheGeometry(waterPoints, 64);
+                const waterMesh = new THREE.Mesh(waterGeo, waterMaterial);
+                waterMesh.renderOrder = 1;
+                waterGroup.add(waterMesh);
+
+                const topCapGeo = new THREE.CircleGeometry(topR, 64);
+                const topCapMesh = new THREE.Mesh(topCapGeo, waterTopCapMat);
+                topCapMesh.position.set(0, topY, 0);
+                topCapMesh.rotation.x = -Math.PI / 2;
+                topCapMesh.renderOrder = 1;
+                waterGroup.add(topCapMesh);
+            }
+
+            if (isPouring && h < 1.0) {
+                const startPt = new THREE.Vector3(0, 1.40, 0);
+                const targetY = -1.10 + h * 2.20;
+                const endPt = new THREE.Vector3(0, targetY, 0);
+                const midPt = new THREE.Vector3(0, (startPt.y + targetY) / 2, 0);
+
+                const streamCurve = new THREE.QuadraticBezierCurve3(startPt, midPt, endPt);
+                const streamGeo = new THREE.TubeGeometry(streamCurve, 18, 0.04, 12, false);
+                const streamMesh = new THREE.Mesh(streamGeo, streamMaterial);
+                streamMesh.renderOrder = 1;
+                streamGroup.add(streamMesh);
+            }
+        }
+
+        let globalAnimTime = 0;
+        function renderLoop() {
+            globalAnimTime += 0.016;
+            update3DFluid(waterLevelH, isSimulating, globalAnimTime);
+            renderer.render(scene, camera);
+            requestAnimationFrame(renderLoop);
+        }
+        renderLoop();
+
+        const canvas = document.getElementById('drawCanvas');
+        const ctx = canvas.getContext('2d');
+        const canvasHint = document.getElementById('canvasHint');
+        const pourStatus = document.getElementById('pourStatus');
+        const drawStatus = document.getElementById('drawStatus');
+
+        const startBtn = document.getElementById('startBtn');
+        const pauseBtn = document.getElementById('pauseBtn');
+        const showAnswerBtn = document.getElementById('showAnswerBtn');
+        const clearBtn = document.getElementById('clearBtn');
+        const vaseShapeSelect = document.getElementById('vaseShapeSelect');
+
+        let isDrawing = false;
+        let isDrawingCompleted = false;
+        let userPoints = [];
+        let showStandardAnswer = false;
+        let cachedStdData = null;
+
+        function resizeCanvas() {
+            const rect = canvas.getBoundingClientRect();
+            canvas.width = rect.width * window.devicePixelRatio;
+            canvas.height = rect.height * window.devicePixelRatio;
+            ctx.scale(window.devicePixelRatio, window.devicePixelRatio);
+            redrawCanvas();
+        }
+
+        window.addEventListener('resize', resizeCanvas);
+
+        function calculateStandardCurveData() {
+            const steps = 300;
+            let totalV = 0;
+            const dh = 1.0 / steps;
+            const vArray = [0];
+            const hArray = [0];
+
+            for (let i = 0; i < steps; i++) {
+                let h = i * dh;
+                let r = getVaseRadiusAtHeight(h);
+                totalV += Math.PI * r * r * dh;
+                vArray.push(totalV);
+                hArray.push((i + 1) * dh);
+            }
+
+            const normalizedV = vArray.map(v => v / totalV);
+            cachedStdData = { v: normalizedV, h: hArray };
+            return cachedStdData;
+        }
+
+        function getHFromV(targetV) {
+            const data = cachedStdData || calculateStandardCurveData();
+            targetV = Math.max(0, Math.min(1, targetV));
+            
+            for (let i = 0; i < data.v.length - 1; i++) {
+                if (targetV >= data.v[i] && targetV <= data.v[i + 1]) {
+                    let ratio = (targetV - data.v[i]) / (data.v[i + 1] - data.v[i] || 1);
+                    return data.h[i] + ratio * (data.h[i + 1] - data.h[i]);
+                }
+            }
+            return targetV >= 1 ? 1 : 0;
+        }
+
+        function redrawCanvas() {
+            const rect = canvas.getBoundingClientRect();
+            const w = rect.width;
+            const h = rect.height;
+            const margin = 60; // 稍微加大留白以容納大字體
+
+            ctx.clearRect(0, 0, w, h);
+
+            // 繪製背景網格
+            ctx.strokeStyle = '#e2e8f0';
+            ctx.lineWidth = 1;
+            for(let i = 1; i <= 4; i++) {
+                let gy = margin + (h - margin * 2) * (i / 5);
+                ctx.beginPath(); ctx.moveTo(margin, gy); ctx.lineTo(w - 20, gy); ctx.stroke();
+                let gx = margin + (w - margin - 20) * (i / 5);
+                ctx.beginPath(); ctx.moveTo(gx, 20); ctx.lineTo(gx, h - margin); ctx.stroke();
+            }
+
+            // 繪製座標軸
+            ctx.strokeStyle = '#64748b';
+            ctx.lineWidth = 2.5;
+            ctx.beginPath();
+            ctx.moveTo(margin, 20);
+            ctx.lineTo(margin, h - margin);
+            ctx.lineTo(w - 20, h - margin);
+            ctx.stroke();
+
+            // 顯著加大的橫軸標籤「注水量 (Volume V)」
+            ctx.fillStyle = '#0369a1';
+            ctx.font = 'bold 16px -apple-system, BlinkMacSystemFont, "Microsoft JhengHei", sans-serif';
+            ctx.fillText('注水量 (Volume V)', w - 160, h - 20);
+
+            // 顯著加大的原點數字「0」
+            ctx.fillStyle = '#475569';
+            ctx.font = 'bold 18px -apple-system, BlinkMacSystemFont, "Microsoft JhengHei", sans-serif';
+            ctx.fillText('0', margin - 22, h - margin + 22);
+            
+            // 顯著加大的縱軸標籤「水深 (Height H)」
+            ctx.save();
+            ctx.translate(26, 130);
+            ctx.rotate(-Math.PI / 2);
+            ctx.fillStyle = '#0369a1';
+            ctx.font = 'bold 16px -apple-system, BlinkMacSystemFont, "Microsoft JhengHei", sans-serif';
+            ctx.fillText('水深 (Height H)', 0, 0);
+            ctx.restore();
+
+            const drawWidth = w - margin - 20;
+            const drawHeight = h - margin - 20;
+
+            const stdData = cachedStdData || calculateStandardCurveData();
+
+            // 理論答案曲線
+            if (showStandardAnswer) {
+                ctx.strokeStyle = '#16a34a';
+                ctx.lineWidth = 3.5;
+                ctx.setLineDash([6, 6]);
+                ctx.beginPath();
+
+                for (let i = 0; i < stdData.v.length; i++) {
+                    let x = margin + stdData.v[i] * drawWidth;
+                    let y = (h - margin) - stdData.h[i] * drawHeight;
+                    if (i === 0) ctx.moveTo(x, y);
+                    else ctx.lineTo(x, y);
+                }
+                ctx.stroke();
+                ctx.setLineDash([]);
+            }
+
+            // 學生繪製曲線
+            if (userPoints.length > 0) {
+                ctx.strokeStyle = '#0284c7';
+                ctx.lineWidth = 4;
+                ctx.lineCap = 'round';
+                ctx.lineJoin = 'round';
+
+                ctx.beginPath();
+                ctx.moveTo(userPoints[0].x, userPoints[0].y);
+
+                for (let i = 1; i < userPoints.length - 1; i++) {
+                    const xc = (userPoints[i].x + userPoints[i + 1].x) / 2;
+                    const yc = (userPoints[i].y + userPoints[i + 1].y) / 2;
+                    ctx.quadraticCurveTo(userPoints[i].x, userPoints[i].y, xc, yc);
+                }
+
+                if (userPoints.length > 1) {
+                    ctx.lineTo(userPoints[userPoints.length - 1].x, userPoints[userPoints.length - 1].y);
+                }
+                ctx.stroke();
+            }
+
+            // 僅在學生劃線完成且開始裝水時顯示紅色追蹤點
+            if (isDrawingCompleted && currentVolumeV > 0) {
+                let pointX = margin + currentVolumeV * drawWidth;
+                let pointY = (h - margin) - waterLevelH * drawHeight;
+
+                ctx.fillStyle = '#e11d48';
+                ctx.beginPath();
+                ctx.arc(pointX, pointY, 7.5, 0, Math.PI * 2);
+                ctx.fill();
+
+                ctx.strokeStyle = '#ffffff';
+                ctx.lineWidth = 2.5;
+                ctx.stroke();
+            }
+        }
+
+        function getPointerPos(e) {
+            const rect = canvas.getBoundingClientRect();
+            return {
+                x: e.clientX - rect.left,
+                y: e.clientY - rect.top
+            };
+        }
+
+        canvas.addEventListener('pointerdown', (e) => {
+            isDrawing = true;
+            isDrawingCompleted = false;
+            canvasHint.style.display = 'none';
+            userPoints = [getPointerPos(e)];
+            redrawCanvas();
+        });
+
+        canvas.addEventListener('pointermove', (e) => {
+            if (!isDrawing) return;
+            userPoints.push(getPointerPos(e));
+            redrawCanvas();
+        });
+
+        function finishDrawing() {
+            if (isDrawing) {
+                isDrawing = false;
+                if (userPoints.length > 3) {
+                    isDrawingCompleted = true;
+                    drawStatus.innerText = '已完成預測';
+                    drawStatus.style.backgroundColor = '#dcfce7';
+                    drawStatus.style.color = '#15803d';
+                    drawStatus.style.borderColor = '#86efac';
+                }
+                redrawCanvas();
+            }
+        }
+
+        canvas.addEventListener('pointerup', finishDrawing);
+        canvas.addEventListener('pointercancel', finishDrawing);
+
+        function stepSimulation() {
+            if (!isSimulating) return;
+
+            currentVolumeV += 0.0016;
+
+            if (currentVolumeV >= 1.0) {
+                currentVolumeV = 1.0;
+                waterLevelH = 1.0;
+                isSimulating = false;
+
+                startBtn.disabled = false;
+                startBtn.innerText = '▶ 重新裝水';
+                pauseBtn.disabled = true;
+                pourStatus.innerText = '裝水完畢';
+                pourStatus.style.borderColor = '#86efac';
+                pourStatus.style.color = '#16a34a';
+
+                redrawCanvas();
+                return;
+            }
+
+            waterLevelH = getHFromV(currentVolumeV);
+            redrawCanvas();
+
+            if (isSimulating) {
+                simAnimationFrame = requestAnimationFrame(stepSimulation);
+            }
+        }
+
+        startBtn.addEventListener('click', () => {
+            if (currentVolumeV >= 1.0) {
+                currentVolumeV = 0;
+                waterLevelH = 0;
+            }
+            
+            isSimulating = true;
+            startBtn.disabled = true;
+            pauseBtn.disabled = false;
+
+            pourStatus.innerText = '正在勻速裝水...';
+            pourStatus.style.borderColor = '#7dd3fc';
+            pourStatus.style.color = '#0284c7';
+
+            stepSimulation();
+        });
+
+        pauseBtn.addEventListener('click', () => {
+            isSimulating = false;
+            cancelAnimationFrame(simAnimationFrame);
+
+            startBtn.disabled = false;
+            startBtn.innerText = '▶ 繼續裝水';
+            pauseBtn.disabled = true;
+
+            pourStatus.innerText = '已暫停';
+            pourStatus.style.borderColor = '#fcd34d';
+            pourStatus.style.color = '#d97706';
+        });
+
+        showAnswerBtn.addEventListener('click', () => {
+            if (!isDrawingCompleted && !showStandardAnswer) {
+                alert("請先在右圖畫出預測曲線，再對比理論答案！");
+                return;
+            }
+
+            showStandardAnswer = !showStandardAnswer;
+            if (showStandardAnswer) {
+                showAnswerBtn.innerText = '🙈 隱藏理論答案';
+                drawStatus.innerText = '答案對比中';
+                drawStatus.style.backgroundColor = '#dcfce7';
+                drawStatus.style.color = '#15803d';
+                drawStatus.style.borderColor = '#86efac';
+            } else {
+                showAnswerBtn.innerText = '👁 對比理論答案';
+                drawStatus.innerText = isDrawingCompleted ? '已完成預測' : '請先劃預測線';
+            }
+            redrawCanvas();
+        });
+
+        clearBtn.addEventListener('click', () => {
+            userPoints = [];
+            isDrawingCompleted = false;
+            showStandardAnswer = false;
+            showAnswerBtn.innerText = '👁 對比理論答案';
+            drawStatus.innerText = '請先劃預測線';
+            drawStatus.style.backgroundColor = '#e0f2fe';
+            drawStatus.style.color = '#0284c7';
+            drawStatus.style.borderColor = '#7dd3fc';
+            canvasHint.style.display = 'block';
+            redrawCanvas();
+        });
+
+        vaseShapeSelect.addEventListener('change', (e) => {
+            currentShapeKey = e.target.value;
+            isSimulating = false;
+            cancelAnimationFrame(simAnimationFrame);
+            currentVolumeV = 0;
+            waterLevelH = 0;
+            userPoints = [];
+            isDrawingCompleted = false;
+            showStandardAnswer = false;
+
+            createVase3DMesh();
+            calculateStandardCurveData();
+
+            startBtn.disabled = false;
+            startBtn.innerText = '▶ 開始裝水';
+            pauseBtn.disabled = true;
+
+            pourStatus.innerText = '等候裝水';
+            pourStatus.style.borderColor = '#7dd3fc';
+            pourStatus.style.color = '#0284c7';
+
+            drawStatus.innerText = '請先劃預測線';
+            drawStatus.style.backgroundColor = '#e0f2fe';
+            drawStatus.style.color = '#0284c7';
+
+            canvasHint.style.display = 'block';
+            redrawCanvas();
+        });
+
+        setTimeout(() => {
+            calculateStandardCurveData();
+            resizeCanvas();
+        }, 100);
+    </script>
+</body>
+</html>
